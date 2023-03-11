@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  postgresql-keycloak:
+    image: postgres:${POSTGRESQL_VERSION}
+    container_name: postgresql-keycloak
+    healthcheck:
+      test: /bin/bash -c "echo > /dev/tcp/localhost/${KEYCLOAK_DB_PORT}"
+      interval: 10s
+      timeout: 10s
+      retries: 50
+    environment:
+      POSTGRES_DB: ${KEYCLOAK_DB}
+      POSTGRES_USER: ${KEYCLOAK_DB_USER}
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASS}
+      TZ: Europe/Moscow
+    stdin_open: true
+    tty: true
+    command: -p ${KEYCLOAK_DB_PORT}
+    ports:
+      - "${KEYCLOAK_DB_PORT}:${KEYCLOAK_DB_PORT}"
+
+  keycloak:
+    image: jboss/keycloak:${KEYCLOAK_VERSION}
+    container_name: keycloak
+    depends_on:
+      - postgresql-keycloak
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgresql-keycloak
+      DB_PORT: ${KEYCLOAK_DB_PORT}
+      DB_DATABASE: ${KEYCLOAK_DB}
+      DB_USER: ${KEYCLOAK_DB_USER}
+      DB_PASSWORD: ${KEYCLOAK_DB_PASS}
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_IMPORT: /opt/jboss/keycloak/imports/realm-notifier.json
+    volumes:
+      - "./keycloak/config:/opt/jboss/keycloak/imports"
+    ports:
+      - "${KEYCLOAK_APP_PORT}:8080"
+
+  # TODO - frontend
+
+  # TODO - backend
