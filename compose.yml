@@ -1,9 +1,9 @@
 version: "3.9"
 
 services:
-  postgresql-keycloak:
+  postgresql-db:
     image: postgres:${POSTGRESQL_VERSION}
-    container_name: postgresql-keycloak
+    container_name: postgresql-db
     healthcheck:
       test: /bin/bash -c "echo > /dev/tcp/localhost/${KEYCLOAK_DB_PORT}"
       interval: 10s
@@ -24,10 +24,10 @@ services:
     image: jboss/keycloak:${KEYCLOAK_VERSION}
     container_name: keycloak
     depends_on:
-      - postgresql-keycloak
+      - postgresql-db
     environment:
       DB_VENDOR: POSTGRES
-      DB_ADDR: postgresql-keycloak
+      DB_ADDR: postgresql-db
       DB_PORT: ${KEYCLOAK_DB_PORT}
       DB_DATABASE: ${KEYCLOAK_DB}
       DB_USER: ${KEYCLOAK_DB_USER}
@@ -40,6 +40,14 @@ services:
     ports:
       - "${KEYCLOAK_APP_PORT}:8080"
 
-  # TODO - frontend
+  back-chat:
+    image: dmitbar716/notifier-back-chat:${BACK_CHAT_VERSION}
+    container_name: back-chat
+    depends_on:
+      - postgresql-db
+    environment:
+      BACK_CHAT_PORT: ${BACK_CHAT_PORT}
+    ports:
+      - "${BACK_CHAT_PORT}:8010"
 
-  # TODO - backend
+  # TODO - frontend
